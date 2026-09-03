@@ -79,6 +79,27 @@
             white-space: nowrap;
         }
 
+        /* Logout button in header */
+        .logout-btn {
+            color: #d4deec;
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 0.3rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 40px;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+
         /* ----- MAIN CONTENT (plain white) – only two cards ----- */
         .main-content {
             flex: 1;
@@ -93,6 +114,23 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+        }
+
+        /* Welcome message */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-section h2 {
+            font-weight: 400;
+            font-size: 1.8rem;
+            color: #142334;
+        }
+
+        .welcome-section p {
+            color: #4a5f7a;
+            font-size: 1rem;
         }
 
         /* ----- TWO CARDS (Data Entry & Financial Reports) – clickable, functional, linked ----- */
@@ -222,6 +260,10 @@
                 flex-direction: column;
                 gap: 0.5rem;
             }
+            .logout-btn {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.8rem;
+            }
         }
 
         @media (max-width: 450px) {
@@ -238,6 +280,9 @@
             .feature-card h2 {
                 font-size: 1.3rem;
             }
+            .welcome-section h2 {
+                font-size: 1.4rem;
+            }
         }
     </style>
 </head>
@@ -250,14 +295,22 @@
                 <h1>INFORMATICS CONSULTANCY FIRM SIERRA LEONE</h1>
                 <div class="header-sub">Financial Management System</div>
             </div>
-            <div class="header-tagline">
-                ⚡ ICF-SL · smart finance
+            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <span class="header-tagline" style="white-space:nowrap;">
+                    ⚡ ICF-SL · smart finance
+                </span>
+                <a href="login.html" class="logout-btn" onclick="logout()">🚪 Logout</a>
             </div>
         </div>
     </header>
 
     <!-- ====== MAIN – PLAIN WHITE BODY with two linked, functional cards ====== -->
     <main class="main-content">
+
+        <div class="welcome-section">
+            <h2>Welcome to ICF-SL Financial System</h2>
+            <p>Select an option below to get started</p>
+        </div>
 
         <div class="cards-container">
 
@@ -275,7 +328,7 @@
 
         </div>
 
-        <!-- subtle feedback area (optional) -->
+        <!-- subtle feedback area -->
         <div id="feedback" style="text-align:center; margin-top:2rem; font-size:0.95rem; color:#4a5f7a; min-height:2rem; transition:0.2s;">
             &nbsp;
         </div>
@@ -316,7 +369,6 @@
                 }
 
                 // The actual navigation happens via the href attribute
-                // This allows the link to work normally
             });
         });
 
@@ -327,7 +379,20 @@
                 feedback.innerHTML = '💡 Click a card to navigate';
                 feedback.style.color = '#7a8aa0';
             }
+
+            // Check if user is logged in
+            if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
         });
+
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            // Redirect to login page
+            window.location.href = 'login.html';
+        }
     </script>
 
 </body>
