@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICF-SL · Financial Records</title>
+    <style>
+        /* ----- reset & base ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #ffffff;
+            background: #0a1428;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ----- ANIMATED BACKGROUND (canvas) ----- */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 50%, #0d1b33 100%);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(ellipse at center, rgba(10, 20, 40, 0.2) 0%, rgba(10, 20, 40, 0.4) 100%);
+            pointer-events: none;
+        }
+
+        /* ----- CONTENT (above canvas) ----- */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ----- HEADER ----- */
+        .header {
+            background: rgba(26, 42, 74, 0.85);
+            backdrop-filter: blur(10px);
+            color: #ffffff;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+        }
+
+        .header-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .header-title-group h1 {
+            font-weight: 500;
+            font-size: 1.7rem;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title-group h1 span {
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .header-sub {
+            font-size: 0.95rem;
+            font-weight: 300;
+            opacity: 0.7;
+            letter-spacing: 0.3px;
+            margin-top: 0.05rem;
+            border-left: 3px solid #5f7a9e;
+            padding-left: 0.75rem;
+        }
+
+        .header-tagline {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem 1rem;
+            border-radius: 40px;
+            font-weight: 300;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        /* ----- MAIN CONTENT (centered) ----- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            max-width: 850px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .main-content .system-badge {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.5;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        .main-content h2 {
+            font-size: 3.2rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #ffffff 0%, #b8cce0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-content .location {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.6;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        .main-content .description {
+            font-size: 1.05rem;
+            font-weight: 300;
+            opacity: 0.75;
+            margin-bottom: 2.2rem;
+            letter-spacing: 0.3px;
+            max-width: 600px;
+            line-height: 1.7;
+        }
+
+        /* ----- BUTTON ----- */
+        .btn {
+            padding: 0.85rem 3.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.3s ease;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 0.3px;
+            background: #ffffff;
+            color: #1a2a4a;
+            box-shadow: 0 4px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(255, 255, 255, 0.18);
+            background: #f0f5ff;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn .arrow {
+            display: inline-block;
+            transition: 0.3s ease;
+        }
+
+        .btn:hover .arrow {
+            transform: translateX(4px);
+        }
+
+        /* ----- STATUS BAR (bottom of main) ----- */
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 300;
+            opacity: 0.6;
+            letter-spacing: 0.2px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .status-dot.green {
+            background: #4caf50;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* ----- FOOTER ----- */
+        .footer {
+            background: rgba(26, 42, 74, 0.5);
+            backdrop-filter: blur(10px);
+            color: #ffffff;
+            padding: 1rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            text-align: center;
+            gap: 0.5rem;
+        }
+
+        .footer-copy {
+            opacity: 0.5;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-copy strong {
+            font-weight: 400;
+            opacity: 0.7;
+        }
+
+        .footer-location {
+            opacity: 0.4;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 700px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.4rem;
+            }
+            .header-tagline {
+                white-space: normal;
+                font-size: 0.75rem;
+                padding: 0.15rem 0.8rem;
+            }
+            .header-title-group h1 {
+                font-size: 1.2rem;
+            }
+            .main-content h2 {
+                font-size: 2.2rem;
+            }
+            .main-content .description {
+                font-size: 0.95rem;
+            }
+            .btn {
+                padding: 0.7rem 2.5rem;
+                font-size: 0.95rem;
+            }
+            .status-bar {
+                gap: 1.2rem;
+            }
+            .status-item {
+                font-size: 0.75rem;
+            }
+            .footer-content {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .header-title-group h1 {
+                font-size: 0.95rem;
+            }
+            .header-sub {
+                font-size: 0.75rem;
+                padding-left: 0.5rem;
+            }
+            .main-content h2 {
+                font-size: 1.6rem;
+            }
+            .main-content .description {
+                font-size: 0.85rem;
+            }
+            .main-content .location {
+                font-size: 0.85rem;
+            }
+            .btn {
+                padding: 0.6rem 1.8rem;
+                font-size: 0.85rem;
+                width: 100%;
+                max-width: 240px;
+            }
+            .status-bar {
+                flex-direction: column;
+                gap: 0.6rem;
+                align-items: center;
+            }
+            .footer-copy {
+                font-size: 0.7rem;
+            }
+            .footer-location {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== ANIMATED CANVAS BACKGROUND ====== -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="overlay"></div>
+
+    <!-- ====== CONTENT WRAPPER ====== -->
+    <div class="content-wrapper">
+
+        <!-- ====== HEADER ====== -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-title-group">
+                    <h1>INFORMATICS CONSULTANCY FIRM SIERRA LEONE</h1>
+                    <div class="header-sub">| Financial Records</div>
+                </div>
+                <div class="header-tagline">
+                    ICF-SL · Sierra Leone
+                </div>
+            </div>
+        </header>
+
+        <!-- ====== MAIN CONTENT ====== -->
+        <main class="main-content">
+
+            <div class="system-badge">✦ Financial Management System</div>
+            <h2>Financial Management System</h2>
+            <p class="location">ICF-SL · Sierra Leone</p>
+
+            <p class="description">
+                Welcome to the comprehensive financial record keeping system for 
+                Informatics Consultancy Firm Sierra Leone. Manage your income, 
+                expenses, and financial reports in one place.
+            </p>
+
+            <a href="login.html" class="btn">
+                Get Started <span class="arrow">→</span>
+            </a>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span class="status-item">
+                    <span class="status-dot green"></span> System Online
+                </span>
+                <span class="status-item">🔒 Secure Connection</span>
+                <span class="status-item">📌 v2.0.1</span>
+                <span class="status-item" id="timeDisplay">⏱️ 12:30:43 PM</span>
+            </div>
+
+        </main>
+
+        <!-- ====== FOOTER ====== -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-copy">
+                    © 2026 <strong>ICF-SL</strong> · All rights reserved
+                </div>
+                <div class="footer-location">
+                    Sierra Leone
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ====== JAVASCRIPT ====== -->
+    <script>
+        // ============================================
+        // ANIMATED BACKGROUND - PARTICLES
+        // ============================================
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+        let mouseX = null;
+        let mouseY = null;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2.5 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.4 + 0.1;
+                const colors = [
+                    'rgba(100, 200, 255, ',
+                    'rgba(150, 180, 255, ',
+                    'rgba(200, 220, 255, ',
+                    'rgba(80, 180, 220, '
+                ];
+                this.colorBase = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (mouseX !== null && mouseY !== null) {
+                    const dx = mouseX - this.x;
+                    const dy = mouseY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        const force = (150 - dist) / 150 * 0.015;
+                        this.x += dx * force;
+                        this.y += dy * force;
+                    }
+                }
+
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.colorBase + this.opacity + ')';
+                ctx.fill();
+            }
+        }
+
+        function initParticles(count = 80) {
+            particles = [];
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Connections
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        const opacity = (1 - dist / 150) * 0.2;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = 'rgba(150, 200, 255, ' + opacity + ')';
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouseX = null;
+            mouseY = null;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            if (touch) {
+                mouseX = touch.clientX;
+                mouseY = touch.clientY;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            setTimeout(() => {
+                mouseX = null;
+                mouseY = null;
+            }, 1000);
+        });
+
+        initParticles(80);
+        animate();
+
+        window.addEventListener('resize', () => {
+            resize();
+            initParticles(80);
+        });
+
+        // ============================================
+        // REAL-TIME CLOCK
+        // ============================================
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeStr = `⏱️ ${hours}:${minutes}:${seconds} ${ampm}`;
+            document.getElementById('timeDisplay').textContent = timeStr;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+
+</body>
+</html>
